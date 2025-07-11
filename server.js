@@ -12,30 +12,32 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
-// Optional: log incoming requests
+// Log every incoming request for debugging
 app.use((req, res, next) => {
   console.log(`📥 ${req.method} ${req.url}`);
   next();
 });
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
+// MongoDB connection (no deprecated options)
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log('✅ Connected to MongoDB'))
   .catch(err => {
     console.error('❌ MongoDB connection failed:', err.message);
-    process.exit(1); // Exit if DB connection fails
+    process.exit(1);
   });
 
-// Order Model
+// Load Order model
 const Order = require('./models/Order');
 
-// POST: Save a new order
+// Route: POST /api/orders → Save a new order
 app.post('/api/orders', async (req, res) => {
   try {
     const { name, mobile, table, orderType, dishes, total } = req.body;
+
+    // Validate required fields
+    if (!name || !mobile || !orderType || !Array.isArray(dishes) || !total) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
 
     const newOrder = new Order({
       name,
@@ -47,7 +49,7 @@ app.post('/api/orders', async (req, res) => {
     });
 
     const savedOrder = await newOrder.save();
-    console.log('✅ Order received:', savedOrder);
+    console.log('✅ Order received and saved:', savedOrder);
     res.status(201).json(savedOrder);
   } catch (error) {
     console.error('❌ Error saving order:', error.message);
@@ -55,7 +57,7 @@ app.post('/api/orders', async (req, res) => {
   }
 });
 
-// GET: Fetch all orders
+// Route: GET /api/orders → Get all orders
 app.get('/api/orders', async (req, res) => {
   try {
     const orders = await Order.find().sort({ createdAt: -1 });
@@ -66,12 +68,12 @@ app.get('/api/orders', async (req, res) => {
   }
 });
 
-// Health check route
+// Health check (root) route
 app.get('/', (req, res) => {
   res.send('🍽️ Food Ordering Backend is running.');
 });
 
-// Start server
+// Start the server
 app.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 });
