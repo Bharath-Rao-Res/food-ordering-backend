@@ -35,7 +35,7 @@ app.post('/api/orders', async (req, res) => {
     const { name, mobile, table, orderType, dishes, total } = req.body;
 
     // Validate required fields
-    if (!name || !mobile || !orderType || !Array.isArray(dishes) || !total) {
+    if (!name || !mobile || !orderType || !Array.isArray(dishes) || total == null) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
